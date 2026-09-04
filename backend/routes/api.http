@@ -15,3 +15,38 @@ Content-Type: application/json
     "password":
 }
 
+###
+
+GET http://localhost:9090/get_user_and_profile
+Content-Type: application/json
+{
+    "token":
+}
+
+###
+
+POST http://localhost:9090/update_profile_data
+{
+    "token":
+    "bio"
+    "currentPost":
+    "pastWork":[
+      {
+        "company":
+        "position":
+        "years":
+      }
+    ],
+    "education": [
+        {
+            "school":
+            "degree":
+            "fieldOfStudy":
+        }
+    ]
+    }
+
+    ###
+    GET http://localhost:9090/user/get_all_users
+
+

@@ -10,9 +10,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(postRoutes);
 app.use(userRoutes);
+app.use(express.static("uploads"))
 
 
 mongoose.connect(process.env.MONGO_URL)
