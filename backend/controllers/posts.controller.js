@@ -1,7 +1,8 @@
-import { readableHighWaterMark } from "pdfkit";
+// import { readableHighWaterMark } from "pdfkit";
 import Post from "../models/posts.model.js";
 import Profile from "../models/profile.model.js";
 import User from "../models/user.model.js";
+import Comment from "../models/comment.model.js";
 import bcrypt from 'bcrypt';
 
 
