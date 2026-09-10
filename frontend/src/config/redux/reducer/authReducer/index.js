@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { loginUser, registerUser } from "../../action/authAction";
-import { register } from "next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup";
+
 
 const initialState = {
     user: [],
@@ -21,6 +21,9 @@ const authSlice = createSlice({
         reset: () => initialState,
         handleLoginUser: (state) => {
             state.message = "hello"
+        },
+        emptyMessage: (state) => {
+            state.message = ""
         }
     },
 
@@ -53,7 +56,9 @@ const authSlice = createSlice({
             state.isError = false;
             state.isSuccess = true;
             state.loggedIn = true;
-            state.message = "Registration is Successfull"
+            state.message = {
+                message : "Registration is Successfull, Please login in"
+            }
         })
         .addCase(registerUser.rejected, (state, action) => {
             state.isLoading = false;
@@ -64,4 +69,5 @@ const authSlice = createSlice({
     }
 })
 
-export default authSlice.reducer
+export const {reset, emptyMessage} = authSlice.actions;
+export default authSlice.reducer;
