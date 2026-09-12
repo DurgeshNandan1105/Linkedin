@@ -27,12 +27,12 @@ useEffect(() => {
   if (authState.loggedIn){
     router.push("/dashboard")
   }
-}, [authState.loggedIn]
+}, [authState.loggedIn, router]
 )
 
 useEffect(()=> {
     dispatch(emptyMessage());
-}, [userLoginMethod])
+}, [userLoginMethod, dispatch])
 
 useEffect(() => {
    if(window.localStorage.getItem("token")){
@@ -80,7 +80,7 @@ if (userLoginMethod) {
 
         <div className={styles.cardContainer_right}>
           <div>
-            {userLoginMethod ? <p>Don't Have an Account?</p> :
+            {userLoginMethod ? <p>{"Don't Have an Account?"}</p> :
           <p>Already Have an Account?</p>}
          <div onClick={() => {
           setUserLoginMethod(!userLoginMethod)

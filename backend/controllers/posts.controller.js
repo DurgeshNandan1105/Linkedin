@@ -68,7 +68,7 @@ export const deletePost = async(req, res) => {
         return res.status(401).json({ message: "Unauthorized"});
      }
 
-     await Post.deletePost({_id: post_id});
+     await Post.deleteOne({_id: post_id});
      return res.json({ message: "Post Deleted"})
 
     } catch(err){
@@ -77,7 +77,7 @@ export const deletePost = async(req, res) => {
 }
 
 export const get_comments_by_post = async(req,res) => {
-    const { post_id } = req.body;
+    const post_id = req.query.post_id || req.body.post_id;
 
     try {
         const post = await Post.findOne({_id: post_id});
@@ -85,7 +85,8 @@ export const get_comments_by_post = async(req,res) => {
         if(!post) {
             return res.status(404).json({message: "Post not found"})
         }
-        return res.json({ comments: post.comments})
+        const comments = await Comment.find({ postId: post_id }).populate('userId', 'name username profilePicture');
+        return res.json({ comments })
     } catch(err){
         return res.status(500).json({message: err.message});
     }
@@ -113,7 +114,7 @@ export const delete_comment_of_user = async (req,res) => {
             return res.status(401).json({message: "Unauthorized"});
         }
 
-        await Comment.deleteOne({"_id ": comment_id});
+        await Comment.deleteOne({"_id": comment_id});
 
         return res.json({ message: "Comment Deleted"})
 

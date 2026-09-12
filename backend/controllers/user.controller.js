@@ -1,5 +1,8 @@
 import User from "../models/user.model.js";
-import Profile from "../models/Profile.model.js";
+import Profile from "../models/profile.model.js";
+import ConnectionRequest from "../models/connection.model.js";
+import Post from "../models/posts.model.js";
+import Comment from "../models/comment.model.js";
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import PDFDocument from 'pdfkit';
@@ -120,10 +123,9 @@ return res.status(500).json({
             const existingUser = await User.findOne({ $or: [{ username}, {email}]});
 
             if(existingUser){
-            if(existingUser || String(existingUser._id) !== String(user._id)) {
-                return res.status(400).json({message: "User already exists"})
-
-            }       
+              if(String(existingUser._id) !== String(user._id)) {
+                  return res.status(400).json({message: "User already exists"})
+              }       
             }
 
             Object.assign(user, newUserData);
@@ -138,7 +140,7 @@ return res.status(500).json({
 
     export const getUserAndProfile = async (req,res) => {
         try {
-            const {token} = req.body;
+            const token = req.body.token || req.query.token;
             const user = await User.findOne({token: token});
 
             if (!user) {
@@ -249,7 +251,7 @@ export const getMyConnectionsRequests = async (req,res) => {
             return res.status(404).json({ message: "User not found"})
         }
 
-        const connections = await ConnectionRequest.find({userId: user_id}).populate('connectionId', 'name username email profilePicture');
+        const connections = await ConnectionRequest.find({userId: user._id}).populate('connectionId', 'name username email profilePicture');
 
         return res.json({ connections })
 
@@ -333,7 +335,7 @@ export const commentPost = async(req,res) => {
         const comment = new Comment({
             userId: user._id,
             postId: post_id,
-            comment: commentBody
+            body: commentBody
         });
 
         await comment.save();
