@@ -1,21 +1,27 @@
 import React, { useEffect } from 'react';
 import styles from "./index.module.css";
 import { useRouter } from 'next/router';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setTokenIsThere } from '@/config/redux/reducer/authReducer';
+import { getAboutUser } from '@/config/redux/action/authAction';
 
 export default function DashboardLayout({children}) {
   const router = useRouter();
   const dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
   
   useEffect(() => {
-          const token = localStorage.getItem("token");
-  
-          if (!token) {
-              router.push("/login");
-          } else {
-              dispatch(setTokenIsThere());
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+          router.push("/login");
+      } else {
+          dispatch(setTokenIsThere());
+          if (!authState.profileFetched) {
+              dispatch(getAboutUser({ token }));
           }
-      });
+      }
+  }, [dispatch, router, authState.profileFetched]);
 
   return (
     <div><div className="container">
@@ -60,6 +66,14 @@ export default function DashboardLayout({children}) {
           </div>
           <div className="homeContainer_extraContainer">
 <h3>Top Profiles</h3>
+{authState.all_profiles_fetched && authState.all_users.map((profile) => {
+  return (
+    <div key={profile._id} className={styles.extraContainer_profile}>
+      <p>{profile.userId.name}</p>
+      </div>
+  )
+
+})}
           </div>
 
          </div>

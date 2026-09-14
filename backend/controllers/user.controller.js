@@ -140,16 +140,22 @@ return res.status(500).json({
 
     export const getUserAndProfile = async (req,res) => {
         try {
-            const token = req.body.token || req.query.token;
+            const token = req.query?.token || req.body?.token;
+            if (!token) {
+                return res.status(400).json({message: "Token is required"});
+            }
             const user = await User.findOne({token: token});
 
             if (!user) {
                 return res.status(404).json({message: "User not found"});
             }
-            const userProfile = await Profile.findOne({ userId: user._id}).populate('userId', 'name email username profilePicture');
+            let userProfile = await Profile.findOne({ userId: user._id}).populate('userId', 'name email username profilePicture');
+
+            if (!userProfile) {
+                userProfile = { userId: user };
+            }
 
             return res.json(userProfile);
-
 
         } catch(error){
             return res.status(500).json({message: error.message})

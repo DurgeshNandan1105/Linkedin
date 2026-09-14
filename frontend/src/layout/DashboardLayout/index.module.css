@@ -23,6 +23,7 @@
     font-size: 1.4rem;
     gap: 1.3rem;
     width: 80%;
+    min-width: 100px;
     max-width: 80%;
     margin: 0 auto;
     cursor: pointer;
@@ -35,6 +36,7 @@
 }
 
 .sideBarOption>svg {
-    height: 1.4em;
+    height: 1.4rem;
+    min-width: fit-content;
     
 }
