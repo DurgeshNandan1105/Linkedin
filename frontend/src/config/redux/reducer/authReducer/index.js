@@ -82,6 +82,12 @@ const authSlice = createSlice({
             state.profileFetched = true;
             state.user = action.payload;
         })
+        .addCase(getAboutUser.rejected, (state, action) => {
+            state.isLoading = false;
+            state.isError = true;
+            state.profileFetched = true;
+            state.message = action.payload;
+        })
         .addCase(getAllUsers.fulfilled, (state, action) => {
             state.isLoading = false;
             state.isError = false;
