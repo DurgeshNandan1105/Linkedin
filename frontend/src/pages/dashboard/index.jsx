@@ -2,8 +2,10 @@ import { getAboutUser, getAllUsers } from "@/config/redux/action/authAction";
 import {
   createPost,
   deletePost,
+  getAllComments,
   getAllPosts,
   incrementPostLike,
+  postComment,
 } from "@/config/redux/action/postAction";
 import DashboardLayout from "@/layout/DashboardLayout";
 import UserLayout from "@/layout/UserLayout";
@@ -12,6 +14,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./index.module.css";
 import { BASE_URL } from "@/config";
+import { resetPostId } from "@/config/redux/reducer/postReducer";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -42,6 +45,7 @@ export default function Dashboard() {
 
   const [postContent, setPostContent] = useState("");
   const [fileContent, setFileContent] = useState();
+  const [commentText, setCommentText] = useState("")
 
   const handleUpload = async () => {
     await dispatch(createPost({ file: fileContent, body: postContent }));
@@ -243,7 +247,9 @@ export default function Dashboard() {
                               </svg>
                               <p>{post.likes}</p>
                             </div>
-                            <div
+                            <div onClick={() => {
+                              dispatch(getAllComments({post_id: post._id }))
+                            }}
                               className={styles.singleOption_optionsContainer}
                             >
                               <svg
@@ -293,6 +299,52 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+          {
+            postState.postId !== "" &&
+            <div 
+            onClick={() => {
+              dispatch(resetPostId())}}
+              className={styles.commentsContainer}>
+              <div 
+              onClick={(e) => {
+                e.stopPropagation()
+              }}className={styles.allCommentsContainer}>
+                {postState.comments.length === 0 && <h2>No Comments</h2>}
+
+                {postState.comments.length !== 0 &&
+                <div className={styles.commentsWrapper}>
+                  {postState.comments.map((comment, index) => {
+                    return (
+                      <div className={styles.singleComment} key={comment._id || index}>
+                        <div className={styles.singleComment_profileContainer}>
+                          <img src={`${BASE_URL}/${comment.userId?.profilePicture}`} alt=""/>
+                          <div>
+                            <p style={{fontWeight: "bold", fontSize:"1rem"}}>{comment.userId?.name}</p>
+                            <p style={{color: "grey", fontSize: "0.85rem"}}>@{comment.userId?.username}</p>
+                          </div>
+                        </div>
+                        <p style={{marginTop: "0.4rem"}}>
+                          {comment.body}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>}
+
+                <div className={styles.postCommentContainer}>
+                  <input type="" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Comment"/>
+                  <div onClick ={async () => {
+                    await dispatch(postComment({post_id: postState.postId, body: commentText}))
+                    await dispatch(getAllComments({post_id: postState.postId }))
+                  }}className={styles.postCommentContainer_commentBtn}>
+                    <p>Comment</p>
+          
+                  </div>
+                </div>
+                
+              </div>
+            </div>
+          }
         </DashboardLayout>
       </UserLayout>
     );

@@ -77,3 +77,44 @@ export const incrementPostLike = createAsyncThunk(
         }
     }
 )
+
+export const getAllComments = createAsyncThunk(
+    "post/getAllComments",
+    async (postData, thunkAPI) => {
+        try {
+            const response = await clientServer.get("/get_comments", {
+                params: {
+                    post_id: postData.post_id
+                }
+            });
+            return thunkAPI.fulfillWithValue({
+                Comments: response.data,
+                post_id: postData.post_id
+            })
+
+        }catch(error){
+   return thunkAPI.rejectWithValue("Something went wrong")
+        }
+        
+    }
+)
+
+export const postComment = createAsyncThunk(
+    "post/postComment",
+    async (commentData, thunkAPI) => {
+        try {
+            console.log({
+                post_id: commentData.post_id,
+                body: commentData.body
+            })
+            const response = await clientServer.post("/comment", {
+                token: localStorage.getItem("token"),
+                post_id: commentData.post_id,
+                commentBody: commentData.body
+            });
+            return thunkAPI.fulfillWithValue(response.data)
+        } catch(error){
+            return thunkAPI.rejectWithValue("Something went wrong")
+        }
+    }
+)
