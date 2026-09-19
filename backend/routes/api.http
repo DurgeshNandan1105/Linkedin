@@ -28,7 +28,7 @@ Content-Type: application/json
 POST http://localhost:9090/update_profile_data
 {
     "token":
-    "bio"
+    "bio":
     "currentPost":
     "pastWork":[
       {

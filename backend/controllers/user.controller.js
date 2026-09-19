@@ -15,21 +15,34 @@ const convertUserDataTOPDF = async(userData) => {
     const stream = fs.createWriteStream("uploads/" + outputPath);
 
     doc.pipe(stream);
-    doc.image(`uploads/${userData.userId.profilePicture}`,{align: "center", width:100});
-    doc.fontSize(14).text(`Name: ${userData.userId.name}`);
-    doc.fontSize(14).text(`Username: ${userData.userId.username}`);
-    doc.fontSize(14).text(`Email: ${userData.userId.email}`);
-    doc.fontSize(14).text(`Bio: ${userData.bio}`);
-    doc.fontSize(14).text(`Current Position: ${userData.currentPost}`);
-    doc.fontSize(14).text("Past Work:")
-    userData.pastWork.forEach((work, index)=> {
-        doc.fontSize(14).text(`Company Name: ${work.company}`);
-        doc.fontSize(14).text(`Position: ${work.position}`);
-        doc.fontSize(14).text(`Years: ${work.years}`);
-    })
+
+    if (userData?.userId?.profilePicture && fs.existsSync(`uploads/${userData.userId.profilePicture}`)) {
+        try {
+            doc.image(`uploads/${userData.userId.profilePicture}`, { align: "center", width: 100 });
+        } catch (e) {
+            console.error("Error embedding profile image into PDF:", e);
+        }
+    }
+
+    doc.fontSize(14).text(`Name: ${userData?.userId?.name || ''}`);
+    doc.fontSize(14).text(`Username: ${userData?.userId?.username || ''}`);
+    doc.fontSize(14).text(`Email: ${userData?.userId?.email || ''}`);
+    doc.fontSize(14).text(`Bio: ${userData?.bio || ''}`);
+    doc.fontSize(14).text(`Current Position: ${userData?.currentPost || ''}`);
+    doc.fontSize(14).text("Past Work:");
+    if (Array.isArray(userData?.pastWork)) {
+        userData.pastWork.forEach((work) => {
+            doc.fontSize(14).text(`Company Name: ${work.company || ''}`);
+            doc.fontSize(14).text(`Position: ${work.position || ''}`);
+            doc.fontSize(14).text(`Years: ${work.years || ''}`);
+        });
+    }
 
     doc.end();
-    return outputPath;
+    return new Promise((resolve, reject) => {
+        stream.on('finish', () => resolve(outputPath));
+        stream.on('error', (err) => reject(err));
+    });
 }
 
 export const register = async (req,res) => {
@@ -194,13 +207,21 @@ return res.status(500).json({
 
 export const downloadProfile = async (req, res) => {
     const user_id = req.query.id;
+    try {
+        const userProfile = await Profile.findOne({userId: user_id})
+        .populate('userId', 'name username email profilePicture');
 
-    const userProfile = await Profile.findOne({userId: user_id})
-    .populate('userId', 'name username email profilePicture');
+        if (!userProfile) {
+            return res.status(404).json({ message: "User profile not found" });
+        }
 
-    let outputPath = await convertUserDataTOPDF(userProfile);
+        let outputPath = await convertUserDataTOPDF(userProfile);
 
-    return res.json({"message": outputPath})
+        return res.json({"message": outputPath});
+    } catch (error) {
+        console.error("Error generating resume PDF:", error);
+        return res.status(500).json({ message: error.message });
+    }
 }
 
 
