@@ -35,10 +35,13 @@ useEffect(()=> {
 }, [userLoginMethod, dispatch])
 
 useEffect(() => {
-   if(window.localStorage.getItem("token")){
-    router.push("/dashboard")
+   const token = window.localStorage.getItem("token");
+   if (token && authState.user && !authState.isError) {
+       router.push("/dashboard");
+   } else if (authState.isError || (authState.profileFetched && !authState.user)) {
+       window.localStorage.removeItem("token");
    }
-}, [router])
+}, [authState.user, authState.profileFetched, authState.isError, router]);
 
 const handleRegister = () => {
    console.log("registering...");

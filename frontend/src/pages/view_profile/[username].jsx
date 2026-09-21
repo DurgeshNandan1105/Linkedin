@@ -71,33 +71,27 @@ export default function viewProfilePage({ userProfile }) {
     <UserLayout>
       <DashboardLayout>
         <div className={styles.container}>
-          <div className={styles.backDropContainer}>
+          <div 
+            className={styles.backDropContainer}
+            style={{
+              backgroundImage: userProfile?.coverPicture 
+                ? `url(${BASE_URL}/${userProfile.coverPicture})` 
+                : undefined
+            }}
+          >
             <img
               className={styles.backDrop}
               src={`${BASE_URL}/${userProfile?.userId?.profilePicture}`}
-              alt="backdrop"
+              alt="avatar"
             />
           </div>
 
           <div className={styles.profileContainer_details}>
-            <div
-              style={{
-                display: "flex",
-                gap: "0.7rem",
-                justifyContent: "space-between",
-              }}
-            >
-              <div style={{ flex: "0.8" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    width: "fit-content",
-                    alignItems: "center",
-                    gap: "1.3rem",
-                  }}
-                >
+            <div className={styles.profileFlexContainer}>
+              <div className={styles.profileDetailsLeft}>
+                <div className={styles.nameUsernameContainer}>
                   <h2>{userProfile?.userId?.name}</h2>
-                  <p style={{ color: "grey" }}>
+                  <p className={styles.usernameText}>
                     @{userProfile?.userId?.username}
                   </p>
                 </div>
@@ -171,7 +165,7 @@ export default function viewProfilePage({ userProfile }) {
                 </div>
               </div>
 
-              <div style={{ flex: "0.2" }}>
+              <div className={styles.recentActivityRight}>
                 <h3>Recent Activity</h3>
                 {userPosts.map((post) => {
                   return (

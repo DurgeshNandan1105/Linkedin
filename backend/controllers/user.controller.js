@@ -48,57 +48,70 @@ const convertUserDataTOPDF = async(userData) => {
 export const register = async (req,res) => {
     try{
         const { name, email, password, username } = req.body;
-        if(!name||!email||!password||!username) return res.status(400).json({message:"All fields are required"})
-            const user = await User.findOne({
-               email
-        });
-        if(user) return res.status(400).json({message: "User already exists"})
-            const hashedPassword = await bcrypt.hash(password,10);
-             const newUser = new User({
-                name,
-                email,
-                password: hashedPassword,
-                username
-             });
+        if(!name||!email||!password||!username) return res.status(400).json({message:"All fields are required"});
 
-             await newUser.save();
-             const profile = new Profile({userId: newUser._id});
-             await profile.save();
-             return res.json({message: "User created"})
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanUsername = username.trim();
+
+        const user = await User.findOne({
+            $or: [
+                { email: new RegExp(`^${cleanEmail.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`, 'i') },
+                { username: cleanUsername }
+            ]
+        });
+
+        if(user) return res.status(400).json({message: "User with this email or username already exists"});
+
+        const hashedPassword = await bcrypt.hash(password,10);
+        const newUser = new User({
+            name: name.trim(),
+            email: cleanEmail,
+            password: hashedPassword,
+            username: cleanUsername
+        });
+
+        await newUser.save();
+        const profile = new Profile({userId: newUser._id});
+        await profile.save();
+        return res.json({message: "User created"});
 
     } catch (error){
-        return res.status(500).json({message: error.message})
+        return res.status(500).json({message: error.message});
     }
 }
-
-
 
 export const login = async (req,res) => {
     try {
         const { email, password} = req.body;
-        if(!email || !password) return res.status(400).json({message: "All fields are required"})
+        if(!email || !password) return res.status(400).json({message: "All fields are required"});
 
-            const user = await User.findOne({
-                email
-            });
+        const input = email.trim();
+        const inputRegex = new RegExp(`^${input.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}$`, 'i');
 
-            if (!user) return res.status(404).json({message:"User does not exist"})
-                const isMatch = await bcrypt.compare(password, user.password);
-                if (!isMatch) return res.status(400).json({message:"Invalid Credentials"});
+        const user = await User.findOne({
+            $or: [
+                { email: inputRegex },
+                { username: input }
+            ]
+        });
 
-                const token = crypto.randomBytes(32).toString("hex");
+        if (!user) return res.status(404).json({message:"User does not exist"});
 
-                await User.updateOne({_id: user._id}, {token});
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(400).json({message:"Invalid Credentials"});
 
-                return res.json({token:token})
+        const token = crypto.randomBytes(32).toString("hex");
 
-        }catch(error){
-return res.status(500).json({
-        message: error.message
-    });
+        await User.updateOne({_id: user._id}, {token});
 
-        }
+        return res.json({token:token});
+
+    } catch(error){
+        return res.status(500).json({
+            message: error.message
+        });
     }
+}
 
 
     export const uploadProfilePicture = async(req,res)=> {
@@ -121,6 +134,31 @@ return res.status(500).json({
         }
     }
 
+    export const updateCoverPicture = async(req, res) => {
+        const { token } = req.body;
+
+        try {
+            const user = await User.findOne({ token: token });
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            let profile = await Profile.findOne({ userId: user._id });
+
+            if (!profile) {
+                profile = new Profile({ userId: user._id });
+            }
+
+            profile.coverPicture = req.file.filename;
+            await profile.save();
+            return res.json({ message: "Cover Picture Updated" });
+
+        } catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
+    }
+
     export const updateUserProfile = async(req,res) => {
         try {
             const {token, ...newUserData} = req.body;
@@ -133,12 +171,16 @@ return res.status(500).json({
 
             const {username, email} = newUserData;
 
-            const existingUser = await User.findOne({ $or: [{ username}, {email}]});
+            if (username || email) {
+                const query = [];
+                if (username) query.push({ username });
+                if (email) query.push({ email });
 
-            if(existingUser){
-              if(String(existingUser._id) !== String(user._id)) {
-                  return res.status(400).json({message: "User already exists"})
-              }       
+                const existingUser = await User.findOne({ $or: query });
+
+                if (existingUser && String(existingUser._id) !== String(user._id)) {
+                    return res.status(400).json({message: "User already exists"});
+                }
             }
 
             Object.assign(user, newUserData);
@@ -178,21 +220,36 @@ return res.status(500).json({
     export const updateProfileData = async (req, res) => {
         try {
             const { token, ...newProfileData} = req.body;
-            const userProfile = await User.findOne({token: token});
+            const user = await User.findOne({token: token});
 
-            if(!userProfile) {
+            if(!user) {
                 return res.status(404).json({message: "User not found"})
             }
 
-            const profile_to_update = await Profile.findOne({userId: userProfile._id});
+            if (newProfileData.education !== undefined && !Array.isArray(newProfileData.education)) {
+                delete newProfileData.education;
+            }
+            if (newProfileData.pastWork !== undefined && !Array.isArray(newProfileData.pastWork)) {
+                delete newProfileData.pastWork;
+            }
 
-            Object.assign(profile_to_update, newProfileData);
+            let profile_to_update = await Profile.findOne({userId: user._id});
+
+            if (!profile_to_update) {
+                profile_to_update = new Profile({
+                    userId: user._id,
+                    ...newProfileData
+                });
+            } else {
+                Object.assign(profile_to_update, newProfileData);
+            }
+
             await profile_to_update.save();
             return res.json({ message: "Profile Updated"});
 
-            
         } catch(error){
-            return res.status(500).json({message: error.message})
+            console.error("Error updating profile data:", error);
+            return res.status(500).json({message: error.message});
         }
     }
 

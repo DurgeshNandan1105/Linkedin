@@ -19,9 +19,9 @@ export default function NavBarComponent() {
             }}>Pro Connect</h1>
 
             <div className={styles.navBarOptionsContainer}>
-                {authState.profileFetched && <div>
+                {authState.profileFetched && authState.user && <div>
                     <div style={{display: "flex", gap:"1.2rem"}}>
-                    <p>Hey, {authState.user?.userId?.name || authState.user?.name}</p>
+                    {/* <p>Hey, {authState.user?.userId?.name || authState.user?.name}</p> */}
                     <p  onClick={() => {
                         router.push("/profile")}}style={{fontWeight: "bold", cursor: "pointer"}}>Profile</p>
                     <p onClick={() => {
@@ -32,8 +32,10 @@ export default function NavBarComponent() {
                         style={{fontWeight: "bold", cursor: "pointer"}}>Logout</p>
                     </div>
                     </div>}
-                {!authState.profileFetched && 
+                {(!authState.profileFetched || !authState.user) && 
                 <div onClick={()=>{
+                    localStorage.removeItem("token")
+                    dispatch(reset())
                     router.push("/login")
                 }} className={styles.buttonJoin}>
                     <p>Be a part</p>
